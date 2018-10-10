@@ -21,15 +21,15 @@ from enum import Enum, unique
 
 @unique
 class Dataset(Enum):
-    luna16 = 1
-    mscoco17 = 2
-          
+    vol = 1
+    img = 2
+
 def get_generator(dataset):
-    if dataset == 'luna16':
+    if dataset == 'vol':
         generate_train_batches = ld3D.generate_train_batches
         generate_val_batches = ld3D.generate_val_batches
         generate_test_batches = ld3D.generate_test_batches
-    elif dataset == 'mscoco17':
+    elif dataset == 'img':
         generate_train_batches = ld2D.generate_train_batches
         generate_val_batches = ld2D.generate_val_batches
         generate_test_batches = ld2D.generate_test_batches
@@ -37,4 +37,3 @@ def get_generator(dataset):
         logging.error('Not valid dataset!')
         return None, None, None
     return generate_train_batches, generate_val_batches, generate_test_batches
-    

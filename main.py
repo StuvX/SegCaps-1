@@ -31,7 +31,7 @@ Data:
     MS COCO 2017 or LUNA 2016 were tested on this package.
     You can leverage your own data set but the mask images should follow the format of MS COCO or with background color = 0 on each channel.
 
-Enhancement: 
+Enhancement:
   1. The program was modified to support python 3.6 on Ubuntu 18.04 and Windows 10.
   2. Support not only 3D computed tomography scan images but also 2D Microsoft Common Objects in COntext (MS COCO) dataset images.
   3. Add Kfold parameter for users to customize the cross validation task. K = 1 will force model to perform overfit.
@@ -82,7 +82,7 @@ def main(args):
     image = sitk.GetArrayFromImage(sitk.ReadImage(join(args.data_root_dir, 'imgs', train_list[0][0])))
     img_shape = image.shape # # (x, y, channels)
     if args.dataset == 'luna16':
-        net_input_shape = (img_shape[1], img_shape[2], args.slices)    
+        net_input_shape = (img_shape[1], img_shape[2], args.slices)
     else:
         args.slices = 1
         if GRAYSCALE == True:
@@ -90,7 +90,7 @@ def main(args):
         else:
             net_input_shape = (RESOLUTION, RESOLUTION, 3) # Only access RGB 3 channels.
     # Create the model for training/testing/manipulation
-    # enable_decoder = False only for SegCaps R3 to disable recognition image output on evaluation model 
+    # enable_decoder = False only for SegCaps R3 to disable recognition image output on evaluation model
     # to speed up performance.
     model_list = create_model(args=args, input_shape=net_input_shape, enable_decoder=True)
     print_summary(model=model_list[0], positions=[.38, .65, .75, 1.])
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     #   # Calculate distance from actual labels using cross entropy
     # cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=correct_label_reshaped[:])
     #   #Take mean for total loss
-    # loss_op = tf.reduce_mean(cross_entropy, name="fcn_loss")    
+    # loss_op = tf.reduce_mean(cross_entropy, name="fcn_loss")
     parser.add_argument('--batch_size', type=int, default=1,
                         help='Batch size for training/testing.')
     parser.add_argument('--initial_lr', type=float, default=0.00001,
@@ -240,21 +240,21 @@ if __name__ == '__main__':
                         help = 'Number of GPUs you have available for training. '
                              'If entering specific GPU ids under the --which_gpus arg or if using CPU, '
                              'then this number will be inferred, else this argument must be included.')
-    # Enhancements: 
+    # Enhancements:
     # TODO: implement softmax entroyp loss function for multiclass segmentation
-    parser.add_argument('--dataset', type=str.lower, default='mscoco17', choices=['luna16', 'mscoco17'],
-                        help='Enter "mscoco17" for COCO dataset, "luna16" for CT images')
-    parser.add_argument('--num_class', type=int, default=2, 
+    parser.add_argument('--dataset', type=str.lower, default='img', choices=['img', 'vol'],
+                        help='Enter "img" for 2d images dataset, "vol" for 3d voxels')
+    parser.add_argument('--num_class', type=int, default=2,
                         help='Number of classes to segment. Default is 2. If number of classes > 2, '
                             ' the loss function will be softmax entropy and only apply on SegCapsR3'
-                            '** Current version only support binary classification tasks.') 
+                            '** Current version only support binary classification tasks.')
     parser.add_argument('--Kfold', type=int, default=4, help='Define K value for K-fold cross validate'
                             ' default K = 4, K = 1 for over-fitting test')
     parser.add_argument('--retrain', type=int, default=0, choices=[0, 1], help='Retrain your model based on existing weights.'
                             ' default 0=train your model from scratch, 1 = retrain existing model.'
-                            ' The weights file location of the model has to be provided by --weights_path parameter' )    
+                            ' The weights file location of the model has to be provided by --weights_path parameter' )
     parser.add_argument('--loglevel', type=int, default=4, help='loglevel 3 = debug, 2 = info, 1 = warning, '
-                            ' 4 = error, > 4 =critical') 
+                            ' 4 = error, > 4 =critical')
     arguments = parser.parse_args()
 
     # assuming loglevel is bound to the string value obtained from the

@@ -12,17 +12,17 @@ This program includes all functions of 2D color image processing for UNet, tiram
 Tasks:
     The program based on parameters from main.py to load 2D color image files from folders.
 
-    The program will convert all image files into numpy format then store training/testing images into 
-    ./data/np_files and training (and testing) file lists under ./data/split_list folders. 
-    You need to remove these two folders every time if you want to replace your training image and mask files. 
+    The program will convert all image files into numpy format then store training/testing images into
+    ./data/np_files and training (and testing) file lists under ./data/split_list folders.
+    You need to remove these two folders every time if you want to replace your training image and mask files.
     The program will only read data from np_files folders.
-    
+
 Data:
     MS COCO 2017 or LUNA 2016 were tested on this package.
     You can leverage your own data set but the mask images should follow the format of MS COCO or with background color = 0 on each channel.
-    
 
-Features: 
+
+Features:
     1. Integrated with MS COCO 2017 dataset.
     2. Use PILLOW library instead of SimpleITK for better support on RasberryPi
     3. add new generate_test_image function to process single image frame for video stream
@@ -48,8 +48,8 @@ plt.ioff()
 from utils.custom_data_aug import augmentImages, convert_img_data, convert_mask_data
 from utils.threadsafe import threadsafe_generator
 
-debug = 0    
-    
+debug = 0
+
 def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
     fname = img_name[:-4]
     numpy_path = join(root_path, 'np_files')
@@ -72,16 +72,16 @@ def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
         except:
             pass
 
-    try:       
+    try:
         img = np.array(Image.open(join(img_path, img_name)))
         # Conver image to 3 dimensions
         img = convert_img_data(img, 3)
-            
+
         if not no_masks:
             # Replace SimpleITK to PILLOW for 2D image support on Raspberry Pi
             mask = np.array(Image.open(join(mask_path, img_name))) # (x,y,4)
-            
-            mask = convert_mask_data(mask)
+
+            mask = convert_mask_data(mask,from_background_color = (255,0,0,255))
 
         if not no_masks:
             np.savez_compressed(join(numpy_path, fname + '.npz'), img=img, mask=mask)
@@ -217,15 +217,15 @@ def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1,
                     continue
                 else:
                     logging.info('\nFinished making npz file.')
-            
+
             # New added for debugging
             if numSlices == 1:
                 subSampAmt = 0
             elif subSampAmt == -1 and numSlices > 1: # Only one slices. code can be removed.
                 np.random.seed(None)
                 subSampAmt = int(rand(1)*(val_img.shape[2]*0.05))
-            
-            # We don't need indicies in 2D image.        
+
+            # We don't need indicies in 2D image.
             indicies = np.arange(0, val_img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride)
             if shuff:
                 shuffle(indicies)
@@ -283,7 +283,7 @@ def generate_test_batches(root_path, test_list, net_input_shape, batchSize=1, nu
 
         indicies = np.arange(0, test_img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride)
         for j in indicies:
-            if img_batch.ndim == 4: 
+            if img_batch.ndim == 4:
                 # (1, 512, 512, 1)
                 img_batch[count, :, :, :] = test_img[:, :, j:j + numSlices * (subSampAmt+1):subSampAmt+1]
             elif img_batch.ndim == 5:
@@ -296,22 +296,21 @@ def generate_test_batches(root_path, test_list, net_input_shape, batchSize=1, nu
             count += 1
             if count % batchSize == 0:
                 count = 0
-                yield (img_batch) 
+                yield (img_batch)
 
     if count != 0:
         yield (img_batch[:count,:,:,:])
- 
+
 @threadsafe_generator
 def generate_test_image(test_img, net_input_shape, batchSize=1, numSlices=1, subSampAmt=0,
                           stride=1, downSampAmt=1):
     '''
     test_img: numpy.array of image data, (height, width, channels)
-    
+
     '''
     # Create placeholders for testing
     logging.info('\nload_2D_data.generate_test_image')
     # Convert image to 4 dimensions
     test_img = convert_img_data(test_img, 4)
-        
+
     yield (test_img)
-       
