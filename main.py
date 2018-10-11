@@ -54,7 +54,7 @@ import argparse
 import SimpleITK as sitk  # image process
 from time import gmtime, strftime
 from keras.utils import print_summary
-from utils.load_data import load_data, split_data
+from utils.load_data import load_data, split_data, load_txt
 from utils.model_helper import create_model
 
 time = strftime("%Y%m%d-%H%M%S", gmtime())
