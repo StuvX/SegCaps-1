@@ -81,7 +81,7 @@ def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
             # Replace SimpleITK to PILLOW for 2D image support on Raspberry Pi
             mask = np.array(Image.open(join(mask_path, img_name))) # (x,y,4)
 
-            mask = convert_mask_data(mask,from_background_color = (255,0,0,255))
+            mask = convert_mask_data(mask)#,from_background_color = (255,0,0,255))
 
         if not no_masks:
             np.savez_compressed(join(numpy_path, fname + '.npz'), img=img, mask=mask)

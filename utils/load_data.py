@@ -12,13 +12,14 @@ Modifications will be needed to train/test on normal 3-channel images.
 Enhancement:
     0. Porting to Python version 3.6
     1. Add image_resize2square to accept any size of images and change to 512 X 512 resolutions.
-    2. 
+    2.
 '''
 
 from __future__ import print_function
 
 import logging
 
+import os
 from os.path import join, basename
 from os import makedirs
 from glob import glob
@@ -53,6 +54,25 @@ def load_data(root, split):
     if new_training_list == []: # if training_list only have 1 image file.
         new_training_list = validation_list
     return new_training_list, validation_list, testing_list
+
+def load_txt(root, data_file):
+    """Take the data_file and create a generator of input and label mask"""
+    #Load the training and testing lists
+    files = [line.rstrip() for line in open(data_file)]
+    for file in files:
+        input_file, mask_file = file.split(" ")
+        input_file = join(root, input_file)
+        assert os.path.exists(image_file) \
+            "Input file does not exist: %s" % input_file
+        mask_file = join(root, mask_file)
+        assert os.path.exists(mask_file) \
+            "Mask file does not exist: %s" % mask_file
+    new_training_list, validation_list = train_test_split(training_list, test_size = 0.1, random_state = 7)
+    if new_training_list == []: # if training_list only have 1 image file.
+        new_training_list = validation_list
+    return new_training_list, validation_list, testing_list
+
+
 
 def compute_class_weights(root, train_data_list):
     '''
@@ -114,7 +134,7 @@ def split_data(root_path, num_splits):
         with open(join(outdir,'test_split_' + str(0) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([basename(mask_list[0])])
-     
+
     else:
         kf = KFold(n_splits=num_splits)
         n = 0
@@ -129,6 +149,3 @@ def split_data(root_path, num_splits):
                 for i in test_index:
                     writer.writerow([basename(mask_list[i])])
             n += 1
-
-
-

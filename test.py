@@ -8,20 +8,20 @@ If you have any questions, please email me at lalonde@knights.ucf.edu.
 This file is used for testing models. Please see the README for details about testing.
 
 ==============
-This is the entry point of the test procedure for UNet, tiramisu, 
+This is the entry point of the test procedure for UNet, tiramisu,
     Capsule Nets (capsbasic) or SegCaps(segcapsr1 or segcapsr3).
 
 @author: Cheng-Lin Li a.k.a. Clark
 
 @copyright:  2018 Cheng-Lin Li@Insight AI. All rights reserved.
 
-@license:    Licensed under the Apache License v2.0. 
+@license:    Licensed under the Apache License v2.0.
             http://www.apache.org/licenses/
 
 @contact:    clark.cl.li@gmail.com
 
 Tasks:
-    The program based on parameters from main.py to perform testing tasks 
+    The program based on parameters from main.py to perform testing tasks
     on all models.
 
 
@@ -79,7 +79,7 @@ def threshold_mask(raw_output, threshold):
     # all_labels 3d:(119, 512, 512)
     all_labels = measure.label(raw_output)
     # props 3d: region of props=>
-    #   list(_RegionProperties:<skimage.measure._regionprops._RegionProperties object>) 
+    #   list(_RegionProperties:<skimage.measure._regionprops._RegionProperties object>)
     # with bbox.
     props = measure.regionprops(all_labels)
     props.sort(key=lambda x: x.area, reverse=True)
@@ -167,12 +167,12 @@ def test(args, test_list, model_list, net_input_shape):
         for i, img in enumerate((test_list)):
             sitk_img = sitk.ReadImage(join(args.data_root_dir, 'imgs', img[0]))
             img_data = sitk.GetArrayFromImage(sitk_img) # 3d:(slices, 512, 512), 2d:(512, 512, channels=4)
-            
+
             # Change RGB to single slice of grayscale image for MS COCO 17 dataset.
-            if args.dataset == 'mscoco17':
+            if args.dataset == 'img':
                 img_data = convert_img_data(img_data, 3)
 
-            num_slices = 1               
+            num_slices = 1
             logging.info('\ntest.test: eval_model.predict_generator')
             _, _, generate_test_batches = get_generator(args.dataset)
             output_array = eval_model.predict_generator(generate_test_batches(args.data_root_dir, [img],
@@ -182,7 +182,7 @@ def test(args, test_list, model_list, net_input_shape):
                                                                               subSampAmt=0,
                                                                               stride=1),
                                                         steps=num_slices, max_queue_size=1, workers=4,
-                                                        use_multiprocessing=args.use_multiprocessing, 
+                                                        use_multiprocessing=args.use_multiprocessing,
                                                         verbose=1)
             logging.info('\ntest.test: output_array=%s'%(output_array))
             if args.net.find('caps') != -1:
@@ -200,10 +200,10 @@ def test(args, test_list, model_list, net_input_shape):
             output_bin = threshold_mask(output, args.thresh_level)
             # output_mask = RIIT (512, 512, 119)
             output_mask = sitk.GetImageFromArray(output_bin)
-            if args.dataset == 'luna16':
+            if args.dataset == 'vol':
                 output_img.CopyInformation(sitk_img)
                 output_mask.CopyInformation(sitk_img)
-    
+
                 print('Saving Output')
                 sitk.WriteImage(output_img, join(raw_out_dir, img[0][:-4] + '_raw_output' + img[0][-4:]))
                 sitk.WriteImage(output_mask, join(fin_out_dir, img[0][:-4] + '_final_output' + img[0][-4:]))
@@ -212,15 +212,15 @@ def test(args, test_list, model_list, net_input_shape):
                 plt.imsave(join(raw_out_dir, img[0][:-4] + '_raw_output' + img[0][-4:]), output[0,:,:])
                 plt.imshow(output_bin[0,:,:], cmap = 'gray')
                 plt.imsave(join(fin_out_dir, img[0][:-4] + '_final_output' + img[0][-4:]), output_bin[0,:,:])
-                
+
             # Load gt mask
             # sitk_mask: 3d RTTI(512, 512, slices)
             sitk_mask = sitk.ReadImage(join(args.data_root_dir, 'masks', img[0]))
             # gt_data: 3d=(slices, 512, 512), Ground Truth data
             gt_data = sitk.GetArrayFromImage(sitk_mask)
-            
-            # Change RGB to single slice of grayscale image for MS COCO 17 dataset.
-            if args.dataset == 'mscoco17':
+
+            # Change RGB to single slice of grayscale image for image dataset.
+            if args.dataset == 'img':
                 gt_data = convert_mask_data(gt_data)
                 # Reshape numpy from 2 to 3 dimensions (slices, heigh, width)
                 gt_data = gt_data.reshape([1, gt_data.shape[0], gt_data.shape[1]])
@@ -228,8 +228,8 @@ def test(args, test_list, model_list, net_input_shape):
             # Plot Qual Figure
             print('Creating Qualitative Figure for Quick Reference')
             f, ax = plt.subplots(1, 3, figsize=(15, 5))
-            
-            if args.dataset == 'mscoco17':               
+
+            if args.dataset == 'img':
                 pass
             else: # 3D data
                 ax[0].imshow(img_data[img_data.shape[0] // 3, :, :], alpha=1, cmap='gray')
@@ -237,13 +237,13 @@ def test(args, test_list, model_list, net_input_shape):
                 ax[0].imshow(gt_data[img_data.shape[0] // 3, :, :], alpha=0.2, cmap='Reds')
                 ax[0].set_title('Slice {}/{}'.format(img_data.shape[0] // 3, img_data.shape[0]))
                 ax[0].axis('off')
-    
+
                 ax[1].imshow(img_data[img_data.shape[0] // 2, :, :], alpha=1, cmap='gray')
                 ax[1].imshow(output_bin[img_data.shape[0] // 2, :, :], alpha=0.5, cmap='Blues')
                 ax[1].imshow(gt_data[img_data.shape[0] // 2, :, :], alpha=0.2, cmap='Reds')
                 ax[1].set_title('Slice {}/{}'.format(img_data.shape[0] // 2, img_data.shape[0]))
                 ax[1].axis('off')
-    
+
                 ax[2].imshow(img_data[img_data.shape[0] // 2 + img_data.shape[0] // 4, :, :], alpha=1, cmap='gray')
                 ax[2].imshow(output_bin[img_data.shape[0] // 2 + img_data.shape[0] // 4, :, :], alpha=0.5,
                              cmap='Blues')
@@ -255,10 +255,10 @@ def test(args, test_list, model_list, net_input_shape):
 
                 fig = plt.gcf()
                 fig.suptitle(img[0][:-4])
-    
+
                 plt.savefig(join(fig_out_dir, img[0][:-4] + '_qual_fig' + '.png'),
                             format='png', bbox_inches='tight')
-                plt.close('all')   
+                plt.close('all')
 
             # Compute metrics
             row = [img[0][:-4]]
