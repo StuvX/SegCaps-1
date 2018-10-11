@@ -72,8 +72,6 @@ def load_txt(root, data_file):
         new_training_list = validation_list
     return new_training_list, validation_list, testing_list
 
-
-
 def compute_class_weights(root, train_data_list):
     '''
         We want to weight the the positive pixels by the ratio of negative to positive.

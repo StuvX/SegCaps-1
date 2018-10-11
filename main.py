@@ -68,20 +68,23 @@ def main(args):
     assert (args.train or args.test or args.manip), 'Cannot have train, test, and manip all set to 0, Nothing to do.'
 
     # Load the training, validation, and testing data
-    try:
-        train_list, val_list, test_list = load_data(args.data_root_dir, args.split_num)
-    except:
-        # Create the training and test splits if not found
-        logging.info('\nNo existing training, validate, test files...System will generate it.')
-        split_data(args.data_root_dir, num_splits = args.Kfold)
-        train_list, val_list, test_list = load_data(args.data_root_dir, args.split_num)
+    if args.data_file != None:
+        train_list, val_list, test_list = load_txt(args.data_root_dir, args.data_file)
+    else:
+        try:
+            train_list, val_list, test_list = load_data(args.data_root_dir, args.split_num)
+        except:
+            # Create the training and test splits if not found
+            logging.info('\nNo existing training, validate, test files...System will generate it.')
+            split_data(args.data_root_dir, num_splits = args.Kfold)
+            train_list, val_list, test_list = load_data(args.data_root_dir, args.split_num)
 
     # Get image properties from first image. Assume they are all the same.
     logging.info('\nRead image files...%s'%(join(args.data_root_dir, 'imgs', train_list[0][0])))
     # Get image shape from the first image.
     image = sitk.GetArrayFromImage(sitk.ReadImage(join(args.data_root_dir, 'imgs', train_list[0][0])))
     img_shape = image.shape # # (x, y, channels)
-    if args.dataset == 'luna16':
+    if args.dataset == 'vol':
         net_input_shape = (img_shape[1], img_shape[2], args.slices)
     else:
         args.slices = 1
@@ -169,6 +172,8 @@ if __name__ == '__main__':
         )
     parser.add_argument('--data_root_dir', type=str, required=True,
                         help='The root directory for your data.')
+    parser.add_argument('--data_file', type=str, default = None, required=False,
+                        help='Path to txt file with inputs and masks list')
     parser.add_argument('--weights_path', type=str, default='',
                         help='/path/to/trained_model.hdf5 from root. Set to "" for none.')
     parser.add_argument('--split_num', type=int, default = 0,
