@@ -50,7 +50,7 @@ from utils.threadsafe import threadsafe_generator
 
 debug = 0
 
-def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, overwrite=False):
+def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, overwrite=False, from_text=False):
     fname = img_name[:-4]
     numpy_path = join(root_path, 'np_files')
     img_path = join(root_path, 'imgs')
@@ -76,13 +76,15 @@ def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, o
             pass
 
     try:
-        img = np.array(Image.open(join(img_path, img_name)))
+        if from_text==True: img = np.array(Image.open(join(root_path, img_name)))
+        elif from_text==False: img = np.array(Image.open(join(img_path, img_name)))
         # Conver image to 3 dimensions
         img = convert_img_data(img, 3)
 
         if not no_masks:
             # Replace SimpleITK to PILLOW for 2D image support on Raspberry Pi
-            mask = np.array(Image.open(join(mask_path, mask_name))) # (x,y,4)
+            if from_text == True: mask = np.array(Image.open(join(root_path, mask_name)))
+            elif from_text == False: mask = np.array(Image.open(join(mask_path, mask_name))) # (x,y,4)
 
             mask = convert_mask_data(mask)#,from_background_color = (255,0,0,255))
 
@@ -143,7 +145,7 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
             except:
                 logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(scan_name[:-4]))
                 if from_text==True:
-                    train_img, train_mask= convert_data_to_numpy(root_path, scan_name, mask_list[i])
+                    train_img, train_mask= convert_data_to_numpy(root_path, scan_name, mask_list[i], from_text=from_text)
                 elif from_text==False:
                     train_img, train_mask = convert_data_to_numpy(root_path, scan_name)
 
@@ -237,7 +239,7 @@ def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1,
                     val_mask = data['mask']
             except:
                 logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(scan_name[:-4]))
-                if from_text==True: val_img, val_mask = convert_data_to_numpy(root_path,scan_name,mask_list[i])
+                if from_text==True: val_img, val_mask = convert_data_to_numpy(root_path,scan_name,mask_list[i], from_text=from_text)
                 elif from_text==False: val_img, val_mask = convert_data_to_numpy(root_path, scan_name)
                 if np.array_equal(val_img,np.zeros(1)):
                     continue
