@@ -55,7 +55,7 @@ def load_data(root, split):
         new_training_list = validation_list
     return new_training_list, validation_list, testing_list
 
-def load_txt(root, data_file):
+def load_txt(root, data_file, num_splits):
     """Take the data_file and create a generator of input and label mask"""
     #Load the training and testing lists
     files = [line.rstrip() for line in open(data_file)]

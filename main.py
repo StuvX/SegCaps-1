@@ -69,7 +69,7 @@ def main(args):
 
     # Load the training, validation, and testing data
     if args.data_file != None:
-        train_list, val_list, test_list = load_txt(args.data_root_dir, args.data_file)
+        train_list, val_list, test_list = load_txt(args.data_root_dir, args.data_file, num_splits = args.Kfold)
     else:
         try:
             train_list, val_list, test_list = load_data(args.data_root_dir, args.split_num)
