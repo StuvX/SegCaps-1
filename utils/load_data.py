@@ -63,7 +63,7 @@ def load_txt(root, data_file, num_splits):
     if new_training_list == []: # if training_list only have 1 image file.
         new_training_list = validation_list
     testing_list = validation_list
-
+    
     outdir = join(root,'split_lists')
     try:
         makedirs(outdir)

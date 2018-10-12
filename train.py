@@ -204,7 +204,7 @@ def train(args, train_list, val_list, u_model, net_input_shape):
         steps_per_epoch=args.steps_per_epoch,
         validation_data=generate_val_batches(args.data_root_dir, val_list, net_input_shape, net=args.net,
                                              batchSize=args.batch_size,  numSlices=args.slices, subSampAmt=0,
-                                             stride=args.stride, shuff=args.shuffle_data),
+                                             stride=args.stride, shuff=args.shuffle_data, from_text=from_text),
         validation_steps=5, # Set validation stride larger to see more of the data.
         epochs=args.epochs,
         callbacks=callbacks,
