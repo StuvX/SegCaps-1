@@ -85,7 +85,8 @@ def main(args):
         logging.info('\nRead image files...%s'%(join(args.data_root_dir, first_image)))
         # Get image shape from the first image.
         image = sitk.GetArrayFromImage(sitk.ReadImage(join(args.data_root_dir, first_image)))
-    else: logging.info('\nRead image files...%s'%(join(args.data_root_dir, 'imgs', train_list[0][0])))
+    else:
+        logging.info('\nRead image files...%s'%(join(args.data_root_dir, 'imgs', train_list[0][0])))
         # Get image shape from the first image.
         image = sitk.GetArrayFromImage(sitk.ReadImage(join(args.data_root_dir, 'imgs', train_list[0][0])))
     img_shape = image.shape # # (x, y, channels)
