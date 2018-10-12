@@ -80,7 +80,8 @@ def main(args):
             train_list, val_list, test_list = load_data(args.data_root_dir, args.split_num)
 
     # Get image properties from first image. Assume they are all the same.
-    if args.data_file is not None: first_image, _ = train_list[0].split(" ")
+    if args.data_file is not None:
+        first_image, _ = train_list[0].split(" ")
         logging.info('\nRead image files...%s'%(join(args.data_root_dir, first_image)))
         # Get image shape from the first image.
         image = sitk.GetArrayFromImage(sitk.ReadImage(join(args.data_root_dir, first_image)))
