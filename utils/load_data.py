@@ -120,7 +120,7 @@ def compute_class_weights(root, train_data_list, from_text=False):
     pos = 0.0
     neg = 0.0
     for img_name in tqdm(train_data_list):
-        if from_text==True: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, img_name[0])))
+        if from_text==True: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, img_name)))
         elif from_text==False: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, 'masks', img_name[0])))
         for slic in img:
             if not np.any(slic):
