@@ -25,11 +25,11 @@ Tasks:
 Data:
     MS COCO 2017 or LUNA 2016 were tested on this package.
     You can leverage your own data set but the mask images should follow the format of MS COCO or with background color = 0 on each channel.
-    
 
-Enhancement: 
+
+Enhancement:
     1. Integrated with MS COCO 2017 dataset.
-    
+
 '''
 
 from __future__ import print_function
@@ -100,7 +100,7 @@ def compile_model(args, net_input_shape, uncomp_model):
     # Set optimizer loss and metrics
 #     opt = Adam(lr=args.initial_lr, beta_1=0.99, beta_2=0.999, decay=1e-6)
     # Revised decay rate to match with the original experiment parameter on the paper
-    opt = Adam(lr=args.initial_lr, beta_1=0.9, beta_2=0.999, epsilon = 0.1, decay = 1e-6)    
+    opt = Adam(lr=args.initial_lr, beta_1=0.9, beta_2=0.999, epsilon = 0.1, decay = 1e-6)
     if args.net.find('caps') != -1:
         metrics = {'out_seg': dice_hard}
     else:
@@ -166,13 +166,16 @@ def train(args, train_list, val_list, u_model, net_input_shape):
     model = compile_model(args=args, net_input_shape=net_input_shape, uncomp_model=u_model)
     if args.retrain == 1:
         # Retrain the model. Load re-train weights.
-        weights_path = join(args.data_root_dir, args.weights_path)        
+        weights_path = join(args.data_root_dir, args.weights_path)
         logging.info('\nRetrain model from weights_path=%s'%(weights_path))
         model.load_weights(weights_path)
     else: # Train from scratch
         pass
     # Set the callbacks
     callbacks = get_callbacks(args)
+
+    if args.data_file == None: from_text=False
+    elif args.data_file != None: from_text=True
 
     # Training the network
 # Original project parameters. TODO: Get hyper parameters from input.
@@ -195,7 +198,7 @@ def train(args, train_list, val_list, u_model, net_input_shape):
     history = model.fit_generator(
         generate_train_batches(args.data_root_dir, train_list, net_input_shape, net=args.net,
                                batchSize=args.batch_size, numSlices=args.slices, subSampAmt=args.subsamp,
-                               stride=args.stride, shuff=args.shuffle_data, aug_data=args.aug_data),
+                               stride=args.stride, shuff=args.shuffle_data, aug_data=args.aug_data, from_text=from_text),
         max_queue_size=8, workers=4, use_multiprocessing=args.use_multiprocessing,
         steps_per_epoch=args.steps_per_epoch,
         validation_data=generate_val_batches(args.data_root_dir, val_list, net_input_shape, net=args.net,

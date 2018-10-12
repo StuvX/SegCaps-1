@@ -50,12 +50,15 @@ from utils.threadsafe import threadsafe_generator
 
 debug = 0
 
-def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
+def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, overwrite=False):
     fname = img_name[:-4]
     numpy_path = join(root_path, 'np_files')
     img_path = join(root_path, 'imgs')
     mask_path = join(root_path, 'masks')
     fig_path = join(root_path, 'figs')
+
+    if mask_name is None: mask_name = img_name
+
     try:
         makedirs(numpy_path)
     except:
@@ -79,7 +82,7 @@ def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
 
         if not no_masks:
             # Replace SimpleITK to PILLOW for 2D image support on Raspberry Pi
-            mask = np.array(Image.open(join(mask_path, img_name))) # (x,y,4)
+            mask = np.array(Image.open(join(mask_path, mask_name))) # (x,y,4)
 
             mask = convert_mask_data(mask)#,from_background_color = (255,0,0,255))
 
@@ -108,10 +111,19 @@ def get_slice(image_data):
 
 @threadsafe_generator
 def generate_train_batches(root_path, train_list, net_input_shape, net, batchSize=1, numSlices=1, subSampAmt=-1,
-                           stride=1, downSampAmt=1, shuff=1, aug_data=1):
+                           stride=1, downSampAmt=1, shuff=1, aug_data=1, from_text=False):
     # Create placeholders for training
     # (img_shape[1], img_shape[2], args.slices)
     logging.info('\n2d_generate_train_batches')
+    if from_text==True:
+        mask_list = []
+        for i, file in enumerate(train_list):
+            input_file, mask_file = file.split(" ")
+            # input_file = join(root_path, input_file)
+            # mask_file = join(root_path, mask_file)
+            train_list[i] = input_file
+            mask_list.append(mask_file)
+
     img_batch = np.zeros((np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32)
     mask_batch = np.zeros((np.concatenate(((batchSize,), (net_input_shape[0], net_input_shape[1], 1)))), dtype=np.uint8)
 
@@ -130,7 +142,11 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
                     train_mask = data['mask']
             except:
                 logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(scan_name[:-4]))
-                train_img, train_mask = convert_data_to_numpy(root_path, scan_name)
+                if from_text==True:
+                    train_img, train_mask= convert_data_to_numpy(root_path, scan_name, mask_list[i])
+                elif from_text==False:
+                    train_img, train_mask = convert_data_to_numpy(root_path, scan_name)
+
                 if np.array_equal(train_img,np.zeros(1)):
                     continue
                 else:
