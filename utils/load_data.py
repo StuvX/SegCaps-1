@@ -76,10 +76,10 @@ def load_txt(root, data_file, num_splits):
         with open(join(outdir,'train_split_' + str(0) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             print('basename=%s'%([basename(new_training_list[0])]))
-            writer.writerow([basename(new_training_list[0])])
+            writer.writerow([new_training_list[0]])
         with open(join(outdir,'test_split_' + str(0) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([basename(new_training_list[0])])
+            writer.writerow([new_training_list[0]])
 
     else:
         kf = KFold(n_splits=num_splits)
@@ -89,11 +89,11 @@ def load_txt(root, data_file, num_splits):
                 writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 for i in train_index:
                     print('basename=%s'%([basename(new_training_list[i])]))
-                    writer.writerow([basename(new_training_list[i])])
+                    writer.writerow([new_training_list[i]])
             with open(join(outdir,'test_split_' + str(n) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 for i in test_index:
-                    writer.writerow([basename(new_training_list[i])])
+                    writer.writerow([new_training_list[i]])
             n += 1
 
     return new_training_list, validation_list, testing_list
@@ -120,7 +120,7 @@ def compute_class_weights(root, train_data_list, from_text=False):
     pos = 0.0
     neg = 0.0
     for img_name in tqdm(train_data_list):
-        if from_text==True: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, img_name)))
+        if from_text==True: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, img_name[0])))
         elif from_text==False: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, 'masks', img_name[0])))
         for slic in img:
             if not np.any(slic):
