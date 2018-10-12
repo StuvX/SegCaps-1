@@ -131,6 +131,8 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
     img_batch = np.zeros((np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32)
     mask_batch = np.zeros((np.concatenate(((batchSize,), (net_input_shape[0], net_input_shape[1], 1)))), dtype=np.uint8)
 
+    print('train list third entry is ',train_list[3])
+    
     while True:
         if shuff:
             shuffle(train_list)
