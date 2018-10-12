@@ -63,6 +63,39 @@ def load_txt(root, data_file):
     if new_training_list == []: # if training_list only have 1 image file.
         new_training_list = validation_list
     testing_list = validation_list
+
+    outdir = join(root_path,'split_lists')
+    try:
+        makedirs(outdir)
+    except:
+        pass
+
+    if num_splits == 1:
+        # Testing model, training set = testing set = 1 image
+
+        with open(join(outdir,'train_split_' + str(0) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            print('basename=%s'%([basename(new_training_list[0])]))
+            writer.writerow([basename(new_training_list[0])])
+        with open(join(outdir,'test_split_' + str(0) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([basename(new_training_list[0])])
+
+    else:
+        kf = KFold(n_splits=num_splits)
+        n = 0
+        for train_index, test_index in kf.split(new_training_list):
+            with open(join(outdir,'train_split_' + str(n) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                for i in train_index:
+                    print('basename=%s'%([basename(new_training_list[i])]))
+                    writer.writerow([basename(new_training_list[i])])
+            with open(join(outdir,'test_split_' + str(n) + '.csv'), 'w', encoding='utf-8', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                for i in test_index:
+                    writer.writerow([basename(new_training_list[i])])
+            n += 1
+
     return new_training_list, validation_list, testing_list
 
     # for file in files:
