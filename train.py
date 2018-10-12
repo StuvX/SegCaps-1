@@ -55,16 +55,16 @@ from utils.load_data import load_class_weights
 from utils.data_helper import get_generator
 
 
-def get_loss(root, split, net, recon_wei, choice):
+def get_loss(root, split, net, recon_wei, choice, from_text=False):
     if choice == 'w_bce':
-        pos_class_weight = load_class_weights(root=root, split=split)
+        pos_class_weight = load_class_weights(root=root, split=split, from_text=from_text)
         loss = weighted_binary_crossentropy_loss(pos_class_weight)
     elif choice == 'bce':
         loss = 'binary_crossentropy'
     elif choice == 'dice':
         loss = dice_loss
     elif choice == 'w_mar':
-        pos_class_weight = load_class_weights(root=root, split=split)
+        pos_class_weight = load_class_weights(root=root, split=split, from_text=from_text)
         loss = margin_loss(margin=0.4, downweight=0.5, pos_weight=pos_class_weight)
     elif choice == 'mar':
         loss = margin_loss(margin=0.4, downweight=0.5, pos_weight=1.0)
@@ -96,7 +96,7 @@ def get_callbacks(arguments):
 
     return [model_checkpoint, csv_logger, lr_reducer, early_stopper, tb]
 
-def compile_model(args, net_input_shape, uncomp_model):
+def compile_model(args, net_input_shape, uncomp_model, from_text=False):
     # Set optimizer loss and metrics
 #     opt = Adam(lr=args.initial_lr, beta_1=0.99, beta_2=0.999, decay=1e-6)
     # Revised decay rate to match with the original experiment parameter on the paper
@@ -107,7 +107,7 @@ def compile_model(args, net_input_shape, uncomp_model):
         metrics = [dice_hard]
 
     loss, loss_weighting = get_loss(root=args.data_root_dir, split=args.split_num, net=args.net,
-                                    recon_wei=args.recon_wei, choice=args.loss)
+                                    recon_wei=args.recon_wei, choice=args.loss, from_text=from_text)
 
     # If using CPU or single GPU
     if args.gpus <= 1:
@@ -162,8 +162,10 @@ def plot_training(training_history, arguments):
     plt.close()
 
 def train(args, train_list, val_list, u_model, net_input_shape):
+    if args.data_file == None: from_text=False
+    elif args.data_file != None: from_text=True
     # Compile the loaded model
-    model = compile_model(args=args, net_input_shape=net_input_shape, uncomp_model=u_model)
+    model = compile_model(args=args, net_input_shape=net_input_shape, uncomp_model=u_model, from_text)
     if args.retrain == 1:
         # Retrain the model. Load re-train weights.
         weights_path = join(args.data_root_dir, args.weights_path)
@@ -174,8 +176,7 @@ def train(args, train_list, val_list, u_model, net_input_shape):
     # Set the callbacks
     callbacks = get_callbacks(args)
 
-    if args.data_file == None: from_text=False
-    elif args.data_file != None: from_text=True
+
 
     # Training the network
 # Original project parameters. TODO: Get hyper parameters from input.

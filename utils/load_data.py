@@ -108,7 +108,7 @@ def load_txt(root, data_file, num_splits):
         #     "Mask file does not exist: %s" % mask_file
     ##TODO make the laod_txt file spit out input and label mask pairs directly for the training to run... this has been implemented in an odd way here
 
-def compute_class_weights(root, train_data_list):
+def compute_class_weights(root, train_data_list, from_text=False):
     '''
         We want to weight the the positive pixels by the ratio of negative to positive.
         Three scenarios:
@@ -120,7 +120,8 @@ def compute_class_weights(root, train_data_list):
     pos = 0.0
     neg = 0.0
     for img_name in tqdm(train_data_list):
-        img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, 'masks', img_name[0])))
+        if from_text==True: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, img_name[0])))
+        elif from_text==False: img = sitk.GetArrayFromImage(sitk.ReadImage(join(root, 'masks', img_name[0])))
         for slic in img:
             if not np.any(slic):
                 continue
@@ -131,7 +132,7 @@ def compute_class_weights(root, train_data_list):
 
     return neg/pos
 
-def load_class_weights(root, split):
+def load_class_weights(root, split, from_text=False):
     class_weight_filename = join(root, 'split_lists', 'train_split_' + str(split) + '_class_weights.npy')
     try:
         return np.load(class_weight_filename)
@@ -139,7 +140,7 @@ def load_class_weights(root, split):
         logging.warning('\nClass weight file {} not found.\nComputing class weights now. This may take '
               'some time.'.format(class_weight_filename))
         train_data_list, _, _ = load_data(root, str(split))
-        value = compute_class_weights(root, train_data_list)
+        value = compute_class_weights(root, train_data_list, from_text)
         np.save(class_weight_filename,value)
         logging.warning('\nFinished computing class weights. This value has been saved for this training split.')
         return value
