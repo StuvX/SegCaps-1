@@ -237,8 +237,8 @@ def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1,
                     val_mask = data['mask']
             except:
                 logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(scan_name[:-4]))
-                if from_text=True: val_img, val_mask = convert_data_to_numpy(root_path,scan_name,mask_list[i])
-                elif from_text=False: val_img, val_mask = convert_data_to_numpy(root_path, scan_name)
+                if from_text==True: val_img, val_mask = convert_data_to_numpy(root_path,scan_name,mask_list[i])
+                elif from_text==False: val_img, val_mask = convert_data_to_numpy(root_path, scan_name)
                 if np.array_equal(val_img,np.zeros(1)):
                     continue
                 else:
