@@ -62,6 +62,7 @@ def load_txt(root, data_file):
     new_training_list, validation_list = train_test_split(files, test_size = 0.1, random_state = 7)
     if new_training_list == []: # if training_list only have 1 image file.
         new_training_list = validation_list
+    testing_list = validation_list
     return new_training_list, validation_list, testing_list
 
     # for file in files:

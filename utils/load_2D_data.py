@@ -209,11 +209,20 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
 
 @threadsafe_generator
 def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1, numSlices=1, subSampAmt=-1,
-                         stride=1, downSampAmt=1, shuff=1):
+                         stride=1, downSampAmt=1, shuff=1, from_text=False):
     logging.info('2d_generate_val_batches')
     # Create placeholders for validation
     img_batch = np.zeros((np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32)
     mask_batch = np.zeros((np.concatenate(((batchSize,), net_input_shape))), dtype=np.uint8)
+
+    if from_text==True:
+        mask_list = []
+        for i, file in enumerate(val_list):
+            input_file, mask_file = file.split(" ")
+            # input_file = join(root_path, input_file)
+            # mask_file = join(root_path, mask_file)
+            val_list[i] = input_file
+            mask_list.append(mask_file)
 
     while True:
         if shuff:
@@ -228,7 +237,8 @@ def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1,
                     val_mask = data['mask']
             except:
                 logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(scan_name[:-4]))
-                val_img, val_mask = convert_data_to_numpy(root_path, scan_name)
+                if from_text=True: val_img, val_mask = convert_data_to_numpy(root_path,scan_name,mask_list[i])
+                elif from_text=False: val_img, val_mask = convert_data_to_numpy(root_path, scan_name)
                 if np.array_equal(val_img,np.zeros(1)):
                     continue
                 else:
