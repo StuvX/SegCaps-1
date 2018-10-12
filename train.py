@@ -165,7 +165,7 @@ def train(args, train_list, val_list, u_model, net_input_shape):
     if args.data_file == None: from_text=False
     elif args.data_file != None: from_text=True
     # Compile the loaded model
-    model = compile_model(args=args, net_input_shape=net_input_shape, uncomp_model=u_model, from_text)
+    model = compile_model(args=args, net_input_shape=net_input_shape, uncomp_model=u_model, from_text=from_text)
     if args.retrain == 1:
         # Retrain the model. Load re-train weights.
         weights_path = join(args.data_root_dir, args.weights_path)
