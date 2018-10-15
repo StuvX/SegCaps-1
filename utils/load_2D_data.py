@@ -82,13 +82,14 @@ def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, o
         if from_text==True: img = np.array(Image.open(join(root_path, img_name)))
         elif from_text==False: img = np.array(Image.open(join(img_path, img_name)))
         # Conver image to 3 dimensions
+        print("image is {} and it's shape is {}".format(img_name,img.shape))
         img = convert_img_data(img, 3)
 
         if not no_masks:
             # Replace SimpleITK to PILLOW for 2D image support on Raspberry Pi
             if from_text == True: mask = np.array(Image.open(join(root_path, mask_name)))
             elif from_text == False: mask = np.array(Image.open(join(mask_path, mask_name))) # (x,y,4)
-
+            print("mask is {} and it's shape is {}".format(mask_name,mask.shape))
             mask = convert_mask_data(mask)#,from_background_color = (255,0,0,255))
 
         if not no_masks:
@@ -239,7 +240,8 @@ def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1,
         count = 0
         for i, scan_name in enumerate(val_list):
             try:
-                scan_name = scan_name[0]
+                if from_text==True: scan_name=scan_name
+                else: scan_name = scan_name[0]
                 path_to_np = join(root_path,'np_files',basename(scan_name)[:-3]+'npz')
                 with np.load(path_to_np) as data:
                     val_img = data['img']
@@ -296,7 +298,7 @@ def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1,
 
 @threadsafe_generator
 def generate_test_batches(root_path, test_list, net_input_shape, batchSize=1, numSlices=1, subSampAmt=0,
-                          stride=1, downSampAmt=1):
+                          stride=1, downSampAmt=1, from_text=False):
     # Create placeholders for testing
     logging.info('\nload_2D_data.generate_test_batches')
     img_batch = np.zeros((np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32)
@@ -304,7 +306,8 @@ def generate_test_batches(root_path, test_list, net_input_shape, batchSize=1, nu
     logging.info('\nload_2D_data.generate_test_batches: test_list=%s'%(test_list))
     for i, scan_name in enumerate(test_list):
         try:
-            scan_name = scan_name[0]
+            if from_text==True: scan_name = scan_name
+            else: scan_name = scan_name[0]
             path_to_np = join(root_path,'np_files',basename(scan_name)[:-3]+'npz')
             with np.load(path_to_np) as data:
                 test_img = data['img'] # (512, 512, 1)
