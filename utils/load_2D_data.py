@@ -51,8 +51,9 @@ from utils.threadsafe import threadsafe_generator
 debug = 0
 
 def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, overwrite=False, from_text=False):
-    # fname = img_name[:-4]
-    fname = basename(img_name)
+    if from_text==True: fname = img_name
+    else: fname = img_name[:-4]
+    
     print('fname is ', fname)
     numpy_path = join(root_path, 'np_files')
     img_path = join(root_path, 'imgs')
@@ -132,7 +133,7 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
     mask_batch = np.zeros((np.concatenate(((batchSize,), (net_input_shape[0], net_input_shape[1], 1)))), dtype=np.uint8)
 
     print('train list third entry is ',train_list[3])
-    
+
     while True:
         if shuff:
             shuffle(train_list)
