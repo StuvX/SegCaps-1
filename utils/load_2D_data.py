@@ -51,7 +51,7 @@ from utils.threadsafe import threadsafe_generator
 debug = 0
 
 def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, overwrite=False, from_text=False):
-    if from_text==True: fname = basename(img_name)
+    if from_text==True: fname = basename(img_name)[:-4]
     else: fname = img_name[:-4]
 
     print('fname is ', fname)
@@ -134,8 +134,6 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
     img_batch = np.zeros((np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32)
     mask_batch = np.zeros((np.concatenate(((batchSize,), (net_input_shape[0], net_input_shape[1], 1)))), dtype=np.uint8)
 
-    print('train list third entry is ',train_list[3])
-
     while True:
         if shuff:
             shuffle(train_list)
@@ -151,7 +149,7 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
                     train_img = data['img']
                     train_mask = data['mask']
             except:
-                logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(scan_name[:-4]))
+                logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(basename(scan_name))
                 if from_text==True:
                     train_img, train_mask= convert_data_to_numpy(root_path, scan_name, mask_list[i], from_text=from_text)
                 elif from_text==False:
