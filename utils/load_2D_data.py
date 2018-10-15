@@ -149,7 +149,7 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
                     train_img = data['img']
                     train_mask = data['mask']
             except:
-                logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(basename(scan_name))
+                logging.info('\nPre-made numpy array not found for {}.\nCreating now...'.format(basename(scan_name)))
                 if from_text==True:
                     train_img, train_mask= convert_data_to_numpy(root_path, scan_name, mask_list[i], from_text=from_text)
                 elif from_text==False:
