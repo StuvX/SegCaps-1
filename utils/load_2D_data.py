@@ -142,7 +142,8 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
         for i, scan_name in enumerate(train_list):
             try:
                 # Read image file from pre-processing image numpy format compression files.
-                scan_name = scan_name[0]
+                if from_text==True: scan_name = scan_name
+                else: scan_name = scan_name[0]
                 path_to_np = join(root_path,'np_files',basename(scan_name)[:-3]+'npz')
                 logging.info('\npath_to_np=%s'%(path_to_np))
                 with np.load(path_to_np) as data:
