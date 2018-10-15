@@ -51,7 +51,7 @@ from utils.threadsafe import threadsafe_generator
 debug = 0
 
 def convert_data_to_numpy(root_path, img_name, mask_name=None, no_masks=False, overwrite=False, from_text=False):
-    if from_text==True: fname = img_name
+    if from_text==True: fname = basename(img_name)
     else: fname = img_name[:-4]
 
     print('fname is ', fname)
