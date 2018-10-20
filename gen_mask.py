@@ -13,7 +13,7 @@ Tasks: Input an image file and output a mask image file.
 @contact:    clark.cl.li@gmail.com
 
 Tasks:
-The program implementation will classify input image by a trained model and generate mask image as 
+The program implementation will classify input image by a trained model and generate mask image as
 image segmentation results.
 
 
@@ -41,6 +41,7 @@ from utils.custom_data_aug import image_resize2square
 # from test import threshold_mask
 from datetime import datetime
 import cv2
+from PIL import Image
 
 FILE_MIDDLE_NAME = 'train'
 IMAGE_FOLDER = 'imgs'
@@ -83,7 +84,7 @@ class FPS:
     def fps(self):
         # compute the (approximate) frames per second
         return self._numFrames / self.elapsed()
-        
+
 class WebcamVideoStream:
     '''
     Leverage thread to read video stream to speed up process time.
@@ -133,19 +134,19 @@ def threshold_mask(raw_output, threshold): #raw_output 3d:(119, 512, 512)
     logging.info('\tThreshold: {}'.format(threshold))
 
     raw_output[raw_output > threshold] = 1
-    raw_output[raw_output < 1] = 0
+    raw_output[raw_output < threshold] = 0
 
     #all_labels 3d:(119, 512, 512)
     all_labels = measure.label(raw_output)
-    # props 3d: region of props=>list(_RegionProperties:<skimage.measure._regionprops._RegionProperties object>) 
-    # with bbox. 
-    props = measure.regionprops(all_labels) 
+    # props 3d: region of props=>list(_RegionProperties:<skimage.measure._regionprops._RegionProperties object>)
+    # with bbox.
+    props = measure.regionprops(all_labels)
     props.sort(key=lambda x: x.area, reverse=True)
     thresholded_mask = np.zeros(raw_output.shape)
 
     if len(props) >= 2:
         # if the largest is way larger than the second largest
-        if props[0].area / props[1].area > 5:  
+        if props[0].area / props[1].area > 5:
             thresholded_mask[all_labels == props[0].label] = 1  # only turn on the largest component
         else:
             thresholded_mask[all_labels == props[0].label] = 1  # turn on two largest components
@@ -159,8 +160,8 @@ def threshold_mask(raw_output, threshold): #raw_output 3d:(119, 512, 512)
 
 def apply_mask(image, mask):
     """apply mask to image"""
-    
-    
+
+
     redImg = np.zeros(image.shape, image.dtype)
     redImg[:,:] = (0,0,255)
     redMask = cv2.bitwise_and(redImg, redImg, mask=mask)
@@ -181,17 +182,17 @@ class segmentation_model():
         self.net_input_shape = net_input_shape
         weights_path = join(args.weights_path)
         # Create model object in inference mode but Disable decoder layer.
-        _, eval_model, _ = create_model(args, net_input_shape, enable_decoder = False) 
-    
+        _, eval_model, _ = create_model(args, net_input_shape, enable_decoder = False)
+
         # Load weights trained on MS-COCO by name because part of output layers are disable.
         eval_model.load_weights(weights_path, by_name=True)
         self.model = eval_model
-               
-        
-    def detect(self, img_list, verbose = False):   
+
+
+    def detect(self, img_list, verbose = False):
         result = []
         r = dict()
-        
+
         for img_data in img_list:
             output_array = self.model.predict_generator(generate_test_image(img_data,
                                                                           self.net_input_shape,
@@ -203,14 +204,14 @@ class segmentation_model():
                                                     use_multiprocessing=False, verbose=1)
             output = output_array[:,:,:,0]
             threshold_level = 0
-            output_bin = threshold_mask(output, threshold_level)      
+            output_bin = threshold_mask(output, threshold_level)
         r['masks'] = output_bin[0,:,:]
-        
+
         # If you want to test the masking without prediction, mark out above line and unmark below line.
         # Below line is make a dummy masking to test the speed.
-#         r['masks'] = np.ones((512, 512), np.int8) # Testing 
+#         r['masks'] = np.ones((512, 512), np.int8) # Testing
         result.append(r)
-        return result 
+        return result
 
 
 if __name__ == '__main__':
@@ -219,75 +220,83 @@ if __name__ == '__main__':
     Example command:
     $python3 gen_mask --input_file ../data/image/train1.png --net segcapsr3 --model_weight ../data/saved_models/segcapsr3/dice16-255.hdf5
     '''
-    
+
     parser = argparse.ArgumentParser(description = 'Mask image by segmentation algorithm')
 
     parser.add_argument('--net', type = str.lower, default = 'segcapsr3',
                         choices = ['segcapsr3', 'segcapsr1', 'capsbasic', 'unet', 'tiramisu'],
-                        help = 'Choose your network.')    
+                        help = 'Choose your network.')
     parser.add_argument('--weights_path', type = str, required = True,
                         help = '/path/to/trained_model.hdf5 from root. Set to "" for none.')
-    parser.add_argument('--num_class', type = int, default = 2, 
+    parser.add_argument('--num_class', type = int, default = 2,
                         help = 'Number of classes to segment. Default is 2. If number of classes > 2, '
                             ' the loss function will be softmax entropy and only apply on SegCapsR3'
-                            '** Current version only support binary classification tasks.')    
+                            '** Current version only support binary classification tasks.')
     parser.add_argument('--which_gpus', type = str, default = '0',
                         help='Enter "-2" for CPU only, "-1" for all GPUs available, '
                              'or a comma separated list of GPU id numbers ex: "0,1,4".')
     parser.add_argument('--gpus', type = int, default = -1,
                         help = 'Number of GPUs you have available for training. '
                              'If entering specific GPU ids under the --which_gpus arg or if using CPU, '
-                             'then this number will be inferred, else this argument must be included.')    
+                             'then this number will be inferred, else this argument must be included.')
+    parser.add_argument('--input_file', type = str, default = None,
+                        help = 'Image to run segmentation on')
 
 
     args = parser.parse_args()
     net_input_shape = (RESOLUTION, RESOLUTION, 1)
     model = segmentation_model(args, net_input_shape)
-    
-    
+
+
 #     # grab a pointer to the video stream and initialize the FPS counter
 #     print('[INFO] sampling frames from webcam...')
-#     cap = cv2.VideoCapture(0)    
-      
-    # these 3 lines can control fps, frame width and height.   
+#     cap = cv2.VideoCapture(0)
+
+    # these 3 lines can control fps, frame width and height.
 #     cap.set(cv2.CAP_PROP_FRAME_WIDTH, RESOLUTION)
-#     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, RESOLUTION)    
-#     cap.set(cv2.CAP_PROP_FPS, 0.1)     
+#     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, RESOLUTION)
+#     cap.set(cv2.CAP_PROP_FPS, 0.1)
 #     fps = FPS().start()
- 
+    img = cv2.imread(args.input_file, cv2.IMREAD_COLOR)
+    # img = np.array(Image.open(args.input_file))
+    img = image_resize2square(img, RESOLUTION)
+    results = model.detect([img],verbose=0)
+    r = results[0]
+    img = apply_mask(img,r['masks'])
+    cv2.imshow("Result", img)
+    cv2.waitKey(0)
     # created a *threaded* video stream, allow the camera sensor to warmup,
     # and start the FPS counter
-    print("[INFO] sampling THREADED frames from webcam...")
-    vs = WebcamVideoStream(src=0).start()
-    fps = FPS().start()
-     
-    # loop over some frames
-    while fps._numFrames < 10000:
-        # grab the frame from the capture stream and resize it to have a maximum
-#         (grabbed, frame) = cap.read()
-        frame = vs.read()
-        frame = image_resize2square(frame, RESOLUTION) # frame = (512, 512, 3)
-  
-        # check to see if the frame should be displayed to our screen
-        results = model.detect([frame], verbose=0)
-        r = results[0] #r['masks'] = [512, 512]
-        frame = apply_mask(frame, r['masks'])
-         
-        cv2.imshow("Frame", frame)
-        # Press q or ESC to stop the video
-        if cv2.waitKey(1) & 0xFF == ord('q') or cv2.waitKey(1) == 27:
-            break
-        else:
-            pass
-        # update the FPS counter
-        fps.update()
-  
-    # stop the timer and display FPS information
-    fps.stop()
-    print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
-    print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
-     
-    # do a bit of cleanup
-    vs.release()
-    cv2.destroyAllWindows()  
-    
+#     print("[INFO] sampling THREADED frames from webcam...")
+#     vs = WebcamVideoStream(src=0).start()
+#     fps = FPS().start()
+#
+#     # loop over some frames
+#     while fps._numFrames < 10000:
+#         # grab the frame from the capture stream and resize it to have a maximum
+# #         (grabbed, frame) = cap.read()
+#         frame = vs.read()
+#         frame = image_resize2square(frame, RESOLUTION) # frame = (512, 512, 3)
+#
+#         # check to see if the frame should be displayed to our screen
+#         results = model.detect([frame], verbose=0)
+#         r = results[0] #r['masks'] = [512, 512]
+#         frame = apply_mask(frame, r['masks'])
+#
+#         cv2.imshow("Frame", frame)
+#         # Press q or ESC to stop the video
+#         if cv2.waitKey(1) & 0xFF == ord('q') or cv2.waitKey(1) == 27:
+#             break
+#         else:
+#             pass
+#         # update the FPS counter
+#         fps.update()
+#
+#     # stop the timer and display FPS information
+#     fps.stop()
+#     print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
+#     print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+#
+#     # do a bit of cleanup
+#     vs.release()
+#     cv2.destroyAllWindows()
